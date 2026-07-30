@@ -5,7 +5,11 @@
  * backends later only means editing this file.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// An empty string means "same origin" (the combined Docker deploy sets
+// VITE_API_URL="" at build time) -- that's different from it being unset
+// entirely (local dev with no .env), which should fall back to localhost.
+// `??` only falls back on null/undefined, so it treats "" correctly.
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 async function request(path, options = {}) {
   const res = await fetch(`${API_BASE_URL}${path}`, {
