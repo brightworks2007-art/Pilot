@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     supabase_bucket: str = "documents"
 
     # LLM (used by the intent parser in services/intent_service.py)
-    anthropic_api_key: str
-    anthropic_model: str = "claude-sonnet-4-6"
+    gemini_api_key: str
+    gemini_model: str = "gemini-2.5-flash"
 
     # CORS - comma-separated list of allowed frontend origins
     frontend_origins: str = "http://localhost:5173"
