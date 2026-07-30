@@ -16,22 +16,25 @@ pilot/
 
 ## How the two halves relate
 
-The frontend is a static site — it has no server logic of its own, and
-never touches Supabase or Claude directly. Every real action goes through
-`frontend/src/services/api.js`, which calls the FastAPI backend over HTTP.
-The backend is the only thing that talks to Supabase (documents + their
-actual files) and Claude (deciding what a prompt means and generating new
-content).
+Both the frontend and backend live in this one Docker image now: a
+multi-stage build (`Dockerfile` at the repo root) builds the React app with
+Node, then hands the result to a Python/FastAPI image, which serves the
+built frontend AND the API (`/execute`, `/documents`, `/executions`) from
+one process. No separate frontend deploy, no CORS between them — same
+origin, relative paths (`/execute` instead of a full URL).
 
 ```
- Browser                Frontend (static)         Backend (FastAPI)         Supabase / Claude
-┌────────┐   click     ┌────────────────┐  fetch  ┌────────────────┐  SQL/  ┌─────────────────┐
-│  User  │ ──────────▶ │  React UI       │ ──────▶ │  /execute etc.  │ ─────▶ │ Postgres+Storage │
-└────────┘             └────────────────┘         └────────────────┘  API   │     + Claude      │
-                                                                              └─────────────────┘
+ Browser              One Render Web Service (Docker)          Supabase / Claude
+┌────────┐   HTTP    ┌───────────────────────────────┐  API   ┌─────────────────┐
+│  User  │ ────────▶ │ FastAPI: serves React build     │ ─────▶│ Postgres+Storage │
+└────────┘           │          + /execute etc. routes │       │     + Claude      │
+                      └───────────────────────────────┘       └─────────────────┘
 ```
 
 ## Local development
+
+For day-to-day frontend work, run the two halves separately like normal
+(fast reload, no Docker rebuild needed):
 
 ```bash
 # terminal 1 — backend
@@ -48,18 +51,34 @@ npm install
 npm run dev
 ```
 
-Then open the Vite dev server URL (default `http://localhost:5173`).
+To test the actual combined Docker build locally before deploying:
 
-## Deploying (Render)
+```bash
+docker build -t pilot .
+docker run -p 8000:8000 --env-file backend/.env pilot
+# visit http://localhost:8000 — same process serves the UI and the API
+```
 
-`render.yaml` at the repo root defines both services as a Render Blueprint:
-- **pilot-frontend** — Static Site, builds `frontend/`, serves `frontend/dist`
-- **pilot-backend** — Web Service, runs `backend/` with `uvicorn`
+## Deploying on Render (no credit card needed this way)
 
-Import this repo as a Blueprint on Render and it will provision both. You
-still need to set the backend's environment variables (Supabase keys,
-Anthropic key) in the Render dashboard, and set the frontend's
-`VITE_API_URL` to the backend's Render URL once it's live.
+Render's **Blueprint** flow (multiple services from one `render.yaml`)
+requires a card on file. Deploying this as **one Docker web service**
+avoids that:
+
+1. Push this repo to GitHub (`Dockerfile`, `frontend/`, `backend/` all at the root)
+2. Render dashboard → **New** → **Web Service**
+3. Connect the repo. When asked for the environment/runtime, choose **Docker**
+   (Render will auto-detect the root `Dockerfile`)
+4. Instance type: **Free**
+5. Add environment variables (Environment tab): `SUPABASE_URL`,
+   `SUPABASE_SERVICE_KEY`, `SUPABASE_BUCKET=documents`, `ANTHROPIC_API_KEY`,
+   `ANTHROPIC_MODEL=claude-sonnet-4-6`
+6. Deploy. Once live, the single URL Render gives you serves everything —
+   the app and the API.
+
+`render.yaml` at the root still exists and describes this same single
+service, in case you ever want to switch to Blueprint deployment instead
+(that's the only scenario where you'd need it).
 
 ## The problem list this is part of
 
