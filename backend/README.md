@@ -8,7 +8,7 @@ update, or delete — instead of explaining the steps.
 
 - FastAPI
 - Supabase (Postgres for metadata + Storage for the actual files)
-- Anthropic Claude (parses a prompt into a CRUD intent + generates new content)
+- Google Gemini (parses a prompt into a CRUD intent + generates new content)
 - Real file-format handling: `python-docx`, `openpyxl`, `python-pptx`, `pypdf` + `reportlab`
 
 ## Setup
@@ -20,7 +20,7 @@ update, or delete — instead of explaining the steps.
    not public — the backend only ever accesses it with the service-role key).
 3. Copy `.env.example` to `.env` and fill in:
    - `SUPABASE_URL` / `SUPABASE_SERVICE_KEY` — from Supabase project settings → API
-   - `ANTHROPIC_API_KEY` — from console.anthropic.com
+   - `GEMINI_API_KEY` — from aistudio.google.com/apikey
    - `FRONTEND_ORIGINS` — comma-separated list of allowed origins (e.g. `http://localhost:5173`)
 4. Install and run:
    ```bash
@@ -51,7 +51,7 @@ app/
 ├── services/
 │   ├── document_service.py   All real Supabase reads/writes (DB rows + Storage files)
 │   ├── execution_service.py  Logs every /execute call for the audit trail
-│   ├── intent_service.py     Calls Claude to turn a prompt into a ParsedIntent
+│   ├── intent_service.py     Calls Gemini to turn a prompt into a ParsedIntent
 │   └── file_handlers/         One handler per file type (docx/xlsx/pptx/pdf/txt/csv),
 │                               all implementing the same read/create/update interface
 └── utils/                (reserved for shared helpers as they come up)
@@ -67,7 +67,7 @@ supabase/
 2. Frontend calls `POST /execute` with `{ prompt, document_id }`.
 3. `execute.py` fetches the document (if given) and its current text via the
    matching file handler, then calls `intent_service.parse_intent(...)`.
-4. Claude returns a `ParsedIntent`: which action (create/read/update/delete),
+4. Gemini returns a `ParsedIntent`: which action (create/read/update/delete),
    how confident it is, and — for create/update — the actual new content.
 5. If confidence is high enough, `execute.py` calls the matching function in
    `document_service.py`, which does the real work: writes the real file
