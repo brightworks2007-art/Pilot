@@ -10,7 +10,7 @@ This is a monorepo:
 ```
 pilot/
 ├── frontend/     React + Vite + Tailwind UI          → see frontend/README.md
-├── backend/      FastAPI + Supabase + Claude          → see backend/README.md
+├── backend/      FastAPI + Supabase + Gemini          → see backend/README.md
 └── render.yaml   Deploys both as separate Render services
 ```
 
@@ -24,10 +24,10 @@ one process. No separate frontend deploy, no CORS between them — same
 origin, relative paths (`/execute` instead of a full URL).
 
 ```
- Browser              One Render Web Service (Docker)          Supabase / Claude
+ Browser              One Render Web Service (Docker)          Supabase / Gemini
 ┌────────┐   HTTP    ┌───────────────────────────────┐  API   ┌─────────────────┐
 │  User  │ ────────▶ │ FastAPI: serves React build     │ ─────▶│ Postgres+Storage │
-└────────┘           │          + /execute etc. routes │       │     + Claude      │
+└────────┘           │          + /execute etc. routes │       │     + Gemini      │
                       └───────────────────────────────┘       └─────────────────┘
 ```
 
@@ -39,7 +39,7 @@ For day-to-day frontend work, run the two halves separately like normal
 ```bash
 # terminal 1 — backend
 cd backend
-cp .env.example .env    # fill in Supabase + Anthropic keys
+cp .env.example .env    # fill in Supabase + Gemini keys
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
@@ -71,8 +71,8 @@ avoids that:
    (Render will auto-detect the root `Dockerfile`)
 4. Instance type: **Free**
 5. Add environment variables (Environment tab): `SUPABASE_URL`,
-   `SUPABASE_SERVICE_KEY`, `SUPABASE_BUCKET=documents`, `ANTHROPIC_API_KEY`,
-   `ANTHROPIC_MODEL=claude-sonnet-4-6`
+   `SUPABASE_SERVICE_KEY`, `SUPABASE_BUCKET=documents`, `GEMINI_API_KEY`,
+   `GEMINI_MODEL=gemini-2.5-flash`
 6. Deploy. Once live, the single URL Render gives you serves everything —
    the app and the API.
 
