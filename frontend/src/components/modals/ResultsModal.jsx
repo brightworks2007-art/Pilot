@@ -40,10 +40,10 @@ export default function ResultsModal({ isOpen, onClose, result }) {
       return
     }
 
-    // Direct navigation, not fetch+blob -- more reliable on mobile browsers,
-    // since it's a real user tap driving the download, not a delayed
-    // synthetic click after an async round-trip.
-    window.open(getDownloadUrl(result.document.id), '_blank')
+    // Same-tab navigation, not window.open -- the server's Content-Disposition
+    // header makes the browser download the file instead of navigating away
+    // from the app, so there's no new tab and no visible page change.
+    window.location.href = getDownloadUrl(result.document.id)
   }
 
   return (
