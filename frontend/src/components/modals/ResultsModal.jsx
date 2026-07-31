@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Download, Copy, Check, FileText, HelpCircle, Loader2 } from 'lucide-react'
+import { Download, Copy, Check, FileText, HelpCircle } from 'lucide-react'
 import Modal from '../common/Modal.jsx'
 import Button from '../common/Button.jsx'
 import Badge from '../common/Badge.jsx'
 import { actionStyles } from '../../utils/formatters.js'
-import { downloadDocument, saveBlobAsFile } from '../../services/api.js'
+import { getDownloadUrl, saveBlobAsFile } from '../../services/api.js'
 
 /**
  * Shown once a real /execute call resolves. `result` is the backend's
@@ -18,8 +18,6 @@ import { downloadDocument, saveBlobAsFile } from '../../services/api.js'
  */
 export default function ResultsModal({ isOpen, onClose, result }) {
   const [copied, setCopied] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
-  const [downloadError, setDownloadError] = useState(null)
 
   if (!result) return null
 
@@ -34,9 +32,7 @@ export default function ResultsModal({ isOpen, onClose, result }) {
     })
   }
 
-  async function handleDownload() {
-    setDownloadError(null)
-
+  function handleDownload() {
     if (!hasRealFile) {
       // Delete / unknown — there's no file, so the message is the artifact.
       const blob = new Blob([result.message], { type: 'text/plain' })
@@ -44,15 +40,10 @@ export default function ResultsModal({ isOpen, onClose, result }) {
       return
     }
 
-    setIsDownloading(true)
-    try {
-      const { blob, filename } = await downloadDocument(result.document.id)
-      saveBlobAsFile(blob, filename)
-    } catch (err) {
-      setDownloadError(err.message ?? 'Download failed')
-    } finally {
-      setIsDownloading(false)
-    }
+    // Direct navigation, not fetch+blob -- more reliable on mobile browsers,
+    // since it's a real user tap driving the download, not a delayed
+    // synthetic click after an async round-trip.
+    window.open(getDownloadUrl(result.document.id), '_blank')
   }
 
   return (
@@ -65,13 +56,8 @@ export default function ResultsModal({ isOpen, onClose, result }) {
           <Button variant="secondary" icon={copied ? Check : Copy} onClick={handleCopy}>
             {copied ? 'Copied' : 'Copy'}
           </Button>
-          <Button
-            variant="secondary"
-            icon={isDownloading ? Loader2 : Download}
-            onClick={handleDownload}
-            disabled={isDownloading}
-          >
-            {isDownloading ? 'Downloading...' : hasRealFile ? 'Download File' : 'Download'}
+          <Button variant="secondary" icon={Download} onClick={handleDownload}>
+            {hasRealFile ? 'Download File' : 'Download'}
           </Button>
           <Button variant="primary" onClick={onClose}>
             Close
@@ -95,8 +81,6 @@ export default function ResultsModal({ isOpen, onClose, result }) {
             {result.message}
           </p>
         </div>
-
-        {downloadError && <p className="text-xs text-danger">{downloadError}</p>}
 
         {isUnknown && (
           <p className="flex items-start gap-1.5 text-xs text-amber-600">
