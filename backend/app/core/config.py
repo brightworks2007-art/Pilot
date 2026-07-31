@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     # LLM (used by the intent parser in services/intent_service.py)
     gemini_api_key: str
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.6-flash"
 
     # CORS - comma-separated list of allowed frontend origins
     frontend_origins: str = "http://localhost:5173"
