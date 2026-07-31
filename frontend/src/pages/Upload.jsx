@@ -6,7 +6,7 @@ import Button from '../components/common/Button.jsx'
 import UploadDropzone from '../components/dashboard/UploadDropzone.jsx'
 import EmptyState from '../components/common/EmptyState.jsx'
 import { formatRelativeTime } from '../utils/formatters.js'
-import { uploadDocument, listDocuments, deleteDocument, downloadDocument, saveBlobAsFile } from '../services/api.js'
+import { uploadDocument, listDocuments, deleteDocument, getDownloadUrl } from '../services/api.js'
 
 /**
  * Dedicated Upload page. Every file dropped here is actually stored in
@@ -59,13 +59,10 @@ export default function Upload() {
     }
   }
 
-  async function handleDownload(id) {
-    try {
-      const { blob, filename } = await downloadDocument(id)
-      saveBlobAsFile(blob, filename)
-    } catch (err) {
-      setError(err.message ?? 'Download failed')
-    }
+  function handleDownload(id) {
+    // Direct navigation, not fetch+blob -- the browser's native download
+    // handling is far more reliable on mobile than a JS-constructed save.
+    window.open(getDownloadUrl(id), '_blank')
   }
 
   return (
