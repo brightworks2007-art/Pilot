@@ -60,9 +60,10 @@ export default function Upload() {
   }
 
   function handleDownload(id) {
-    // Direct navigation, not fetch+blob -- the browser's native download
-    // handling is far more reliable on mobile than a JS-constructed save.
-    window.open(getDownloadUrl(id), '_blank')
+    // Same-tab navigation, not window.open -- the server's Content-Disposition
+    // header makes the browser download the file instead of navigating away
+    // from the app, so there's no new tab and no visible page change.
+    window.location.href = getDownloadUrl(id)
   }
 
   return (
