@@ -55,9 +55,20 @@ export function deleteDocument(id) {
 }
 
 /**
- * Fetches the actual file bytes for a document (not JSON) — this is the
- * "round-trip file integrity" check: the real .docx/.xlsx/.pdf/etc. Pilot
- * created or updated, ready to open in its native app.
+ * Direct URL to a document's real file bytes. Used with window.open()
+ * instead of fetch+blob — letting the browser navigate straight to it and
+ * handle the save natively is far more reliable on mobile browsers than a
+ * JS-constructed blob download, which can get silently blocked once enough
+ * async time has passed since the user's actual tap.
+ */
+export function getDownloadUrl(id) {
+  return `${API_BASE_URL}/documents/${id}/download`
+}
+
+/**
+ * Fetches the actual file bytes for a document (not JSON) — kept for cases
+ * that need the raw blob in memory (rare). Prefer getDownloadUrl() + a
+ * direct navigation for a plain "save this file" button.
  */
 export async function downloadDocument(id) {
   const res = await fetch(`${API_BASE_URL}/documents/${id}/download`)
